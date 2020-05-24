@@ -1,8 +1,12 @@
 const path = require('path');
+const webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const StatsPlugin = require('stats-webpack-plugin');
+const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const CleanWebpackPlugin = require('clean-webpack-plugin');
 
-const distDir = path.join(__dirname, '../dist');
-const srcDir = path.join(__dirname, '../src');
+const distDir = path.join(__dirname, './dist');
+const srcDir = path.join(__dirname, './src');
 
 module.exports = [
     {
@@ -10,14 +14,13 @@ module.exports = [
         target: 'web',
         entry: `${srcDir}/client.jsx`,
         output: {
-            path: path.join(__dirname, 'dist'),
+            path: distDir,
             filename: 'client.js',
-            publicPath: '/dist/',
+            publicPath: distDir,
         },
         resolve: {
             extensions: ['.js', '.jsx']
         },
-        devtool: 'source-map',
         module: {
             rules: [
                 {
@@ -39,28 +42,43 @@ module.exports = [
                                 options: {
                                     modules: true,
                                     importLoaders: 1,
-                                    localIdentName: '[local]',
-                                    sourceMap: true,
+                                    localIdentName: '[hash:base64:10]',
+                                    sourceMap: false,
                                 }
                             },
                             {
                                 loader: 'postcss-loader',
                                 options: {
                                     config: {
-                                        path: `${__dirname}/../postcss/postcss.config.js`,
+                                        path: './postcss/postcss.config.js',
                                     }
                                 }
                             }
                         ]
                     })
-                },
+                }
             ],
         },
         plugins: [
             new ExtractTextPlugin({
                 filename: 'styles.css',
                 allChunks: true
-            })
+            }),
+            new webpack.DefinePlugin({
+                'process.env': {
+                    NODE_ENV: '"production"'
+                }
+            }),
+            new CleanWebpackPlugin(distDir),
+            new webpack.optimize.UglifyJsPlugin({
+                compress: {
+                    warnings: false,
+                    screw_ie8: true,
+                    drop_console: true,
+                    drop_debugger: true
+                }
+            }),
+            new webpack.optimize.OccurrenceOrderPlugin(),
         ]
     },
     {
@@ -68,10 +86,10 @@ module.exports = [
         target: 'node',
         entry: `${srcDir}/server.jsx`,
         output: {
-            path: path.join(__dirname, 'dist'),
+            path: distDir,
             filename: 'server.js',
             libraryTarget: 'commonjs2',
-            publicPath: '/dist/',
+            publicPath: distDir,
         },
         resolve: {
             extensions: ['.js', '.jsx']
@@ -98,7 +116,7 @@ module.exports = [
                             options: {
                                 modules: true,
                                 importLoaders: 1,
-                                localIdentName: '[local]',
+                                localIdentName: '[hash:base64:10]',
                                 sourceMap: false
                             }
                         },
@@ -106,7 +124,7 @@ module.exports = [
                             loader: 'postcss-loader',
                             options: {
                                 config: {
-                                    path: `${__dirname}/../postcss/postcss.config.js`,
+                                    path: './postcss/postcss.config.js',
                                 }
                             }
                         }
@@ -114,5 +132,16 @@ module.exports = [
                 }
             ],
         },
+        plugins: [
+            new OptimizeCssAssetsPlugin({
+                cssProcessorOptions: {discardComments: {removeAll: true}}
+            }),
+            new StatsPlugin('stats.json', {
+                chunkModules: true,
+                modules: true,
+                chunks: true,
+                exclude: [/node_modules[\\\/]react/],
+            }),
+        ]
     }
 ];

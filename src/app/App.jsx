@@ -32,7 +32,7 @@ class Homepage extends Component {
             <div className={styles.component}>
                 <Helmet title="Welcome to our Homepage"/>
                 <Menu/>
-                <h1>Homepage</h1>
+                <h1>Homepage - 2</h1>
             </div>
         );
     }
