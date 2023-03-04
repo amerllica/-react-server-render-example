@@ -9,3 +9,7 @@ dist
 .idea
 
 *.log
+
+
+# misallocated files
+.DS_Store
